@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>YouTube AI Chat</title>
+    <style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0e6d4;
+  color: #333;
+}
+
+h1 {
+  color: #f0e6d4;
+  text-align: center;
+}
+
+.chat-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #e4d3c1;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.message {
+  margin-bottom: 20px;
+}
+
+.user-message {
+  text-align: right;
+}
+
+.bot-message {
+  text-align: left;
+}
+
+.user-message .bubble,
+.bot-message .bubble {
+  display: inline-block;
+  padding: 10px;
+  border-radius: 15px;
+  background-color: #d9c0b3;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.user-message .bubble {
+  background-color: #c4afa3;
+}
+
+.typing-indicator {
+  display: none;
+  text-align: left;
+  margin-bottom: 10px;
+}
+
+.typing-indicator span {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  background-color: #c4afa3;
+  border-radius: 50%;
+  animation: typing 1s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.7);
+  }
+}
+
+.input-section {
+  margin-top: 20px;
+}
+
+.input-section label {
+  display: block;
+  color: #7ca1a0;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.input-section input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #7ca1a0;
+  border-radius: 5px;
+  background-image: linear-gradient(#e4d3c1, #e4d3c1) !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+}
+
+.input-section input[type="submit"] {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  background-color: #f7eede;
+  color: #333;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.input-section input[type="submit"]:hover {
+  background-color: #d9c0b3;
+}
+
+.input-section input[type="submit"]:active {
+  background-color: #d9c0b3;
+  transform: translateY(1px);
+}
+    </style>
+</head>
+<body>
+    <h1>YouTube AI Chat</h1>
+    <div class="chat-container">
+        <div id="response-container"></div>
+        <form id="chat-form" action="/generate_response" method="post">
+            <div class="input-section">
+                <label for="video-url">YouTube Video URL:</label>
+                <input type="text" id="video-url" name="video_url" required placeholder="Enter YouTube Video URL">
+            </div>
+            <div class="input-section">
+                <label for="question">Your Question:</label>
+                <input type="text" id="question" name="question" required placeholder="Enter your question">
+            </div>
+            <div class="input-section">
+                <input type="submit" value="Ask">
+            </div>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+function showTypingIndicator() {
+  $('.typing-indicator').show();
+}
+
+function hideTypingIndicator() {
+  $('.typing-indicator').hide();
+}
+
+function addUserMessage(message) {
+  $('#response-container').append(
+    '<div class="message user-message"><div class="bubble">' +
+      message +
+      '</div></div>'
+  );
+}
+
+function addBotMessage(message) {
+  hideTypingIndicator();
+  var botMessageElement = $(
+    '<div class="message bot-message"><div class="bubble">' + message + '</div></div>'
+  );
+  $('#response-container').append(botMessageElement);
+}
+
+function startTypingAnimation() {
+  showTypingIndicator();
+  var typingAnimation = ['.', '..', '...'];
+  var animationIndex = 0;
+  var typingInterval = setInterval(function () {
+    $('.bot-message:last-child .bubble').text(typingAnimation[animationIndex]);
+    animationIndex = (animationIndex + 1) % typingAnimation.length;
+  }, 500);
+
+  // Store the typing interval ID in a data attribute
+  $('.bot-message:last-child').data('typingInterval', typingInterval);
+}
+
+$(document).ready(function () {
+  $('#chat-form').on('submit', function (event) {
+    event.preventDefault();
+    var form = $(this);
+    var videoUrl = $('#video-url').val();
+    var question = $('#question').val();
+    addUserMessage(question);
+    $('#question').val(''); // Clear only the "Your Question" input box
+
+    var requestData = {
+      video_url: videoUrl,
+      question: question,
+    };
+
+    // Show the typing animation immediately before sending the request
+    addBotMessage('...');
+    startTypingAnimation();
+
+    $.ajax({
+      url: form.attr('action'),
+      method: form.attr('method'),
+      data: JSON.stringify(requestData),
+      contentType: 'application/json',
+      dataType: 'json',
+      success: function (response) {
+        // Remove the typing indicator and replace the "..." with the bot's response
+        clearInterval($('.bot-message:last-child').data('typingInterval'));
+        $('.bot-message:last-child .bubble').text(response.response);
+      },
+      error: function (error) {
+        console.log(error);
+        clearInterval($('.bot-message:last-child').data('typingInterval'));
+        addBotMessage('Error: ' + error.responseJSON.error);
+      },
+    });
+  });
+});
+    </script>
+</body>
+</html>

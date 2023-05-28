@@ -1,0 +1,6 @@
+Step 1: Import the YTGpt folder into Vs Code by dragging and dropping the folder into the Software
+
+Step 2: Get yourself an Open AI API key and enter it into the .env file
+
+Step 3: Save your files and run the Python Code by clicking the button on the top right corner,
+you'll then recieve a link in the terminal which you can use as a link to the GUI 
